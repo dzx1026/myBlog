@@ -7,11 +7,11 @@ logging.basicConfig(level=logging.INFO)
 
 async def create_pool(loop, **kw):
     global __pool
-    __pool = await aiomysql.create(
+    __pool = await aiomysql.create_pool(
         host=kw.get('host', 'localhost'),  # localhost为默认值
         port=kw.get('port', 3306),
         user=kw['user'],  # 从kw中取得user
-        password=kw['password'],
+        password=kw['passwd'],
         db=kw['db'],
         charset=kw.get('charset', 'utf8'),
         autocommit=kw.get('autocommit', True),
@@ -26,7 +26,7 @@ async def select(sql, args, size=None):
     global __pool
     with (await __pool) as conn:  # await __pool 从__pool这个生成器中不断的去获取
         cur = await conn.cursor(aiomysql.DictCursor)
-        await cur.execute(sql.replace('?', '\s'), args or ())
+        await cur.execute(sql.replace('?', '%s'), args or ())
         if size:
             rs = await cur.fetchmany(size)  # 获取指定数量的记录
         else:
@@ -39,12 +39,13 @@ async def select(sql, args, size=None):
 
 # 用于数据库delete、update、insert操作
 async def execute(sql, args):
-    logging.info(sql, args)
+    logging.info(sql)
+    logging.info(args)
     global __pool
     with (await __pool) as conn:
         try:  # 找不到数据的时候容易报错，进行错误捕捉
             cur = await conn.cursor()
-            await cur.execute(sql.replace('?', '\s'), args or ())
+            await cur.execute(sql.replace('?', '%s'), args or ())
             affected = cur.rowcount
             await cur.close()
         except BaseException as e:
@@ -133,7 +134,7 @@ class ModelMetaClass(type):
         attrs['__fields__'] = fields  # 除主键外的属性名
         # 构造默认的select update insert delete语句,语句什么意思？打印出来看看
         attrs['__select__'] = 'select %s,%s from %s' % (primarykey, ','.join(escaped_field), tablename)
-        attrs['__insert__'] = 'insert into %s (%s, %s) value(%s)' % (tablename, ','.join(escaped_field), primarykey,
+        attrs['__insert__'] = 'insert into %s (%s, %s) values(%s)' % (tablename, ','.join(escaped_field), primarykey,
                                                                      create_args_string(len(escaped_field) + 1))
         # map(lambda f: '%s=?' % (mappings.get(f).name or f), fields)
         # Fields类的name属性用于记录sql表的列名，没有的话默认为key值

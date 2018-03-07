@@ -1,8 +1,13 @@
 -- schema.sql
+drop database if exists myblog;
+create database myblog;
+use myblog;
+grant select, insert, update, delete on myblog.* to 'dzx'@'localhost' identified by '123456';
+
 
 use myblog;
 
-create table users (
+create table users(
     `id` varchar(50) not null,
     `email` varchar(50) not null,
     `passwd` varchar(50) not null,
@@ -28,7 +33,7 @@ create table blogs (
     primary key (`id`)
 ) engine=innodb default charset=utf8;
 
-create table comments (
+create table comments(
     `id` varchar(50) not null,
     `blog_id` varchar(50) not null,
     `user_id` varchar(50) not null,
