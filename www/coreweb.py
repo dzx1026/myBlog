@@ -1,6 +1,7 @@
 import functools, logging
 import asyncio
 import inspect
+from aiohttp import web
 
 
 # 定义了一个装饰器
@@ -70,3 +71,24 @@ def add_routes(app, module_name):
                 path = getattr(fn, '__route__', None)
                 if method and path:
                     add_route(app, fn)
+
+
+# middleware是一种拦截器,记录URL日志
+@asyncio.coroutine
+def logger_factory(app, handler):
+    @asyncio.coroutine
+    def logger(request):
+        logging.info('request: %s %s' % (request.method, request.path))
+        return (yield from handler(request))
+    return logger
+
+
+@asyncio.coroutine
+def response_factory(app, handler):
+    @asyncio.coroutine
+    def response(request):
+        r = yield from handler(request)
+        if isinstance(r, bytes):
+            resp = web.Response(body = r)
+            resp.content_type('application/octet-stream')
+            return resp

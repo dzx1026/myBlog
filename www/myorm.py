@@ -183,6 +183,14 @@ class Model(dict, metaclass=ModelMetaClass):
         logging.info(cls(**rs[0]))
         return cls(**rs[0]) # 返回cls类的一个实例,初始化的参数是rs[0]
 
+    @classmethod
+    async def findall(cls):
+        rs = await select('select * from %s' % cls.__tablename__)
+        logging.info(rs)
+        if len(rs) == 0:
+            return None
+        return [cls(**r) for r in rs]
+
     async def save(self):
         args = list(map(self.getvalueordefault, self.__fields__))
         args.append(self.getvalueordefault(self.__primary_key__))
