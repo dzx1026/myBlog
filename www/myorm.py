@@ -22,7 +22,7 @@ async def create_pool(loop, **kw):
 
 
 async def select(sql, args, size=None):
-    logging.info(sql, args)
+    logging.info(sql)
     global __pool
     with (await __pool) as conn:  # await __pool 从__pool这个生成器中不断的去获取
         cur = await conn.cursor(aiomysql.DictCursor)
@@ -104,7 +104,7 @@ class ModelMetaClass(type):
         # 排除Model类本身
         if name == 'Model':
             return type.__new__(cls, name, bases, attrs)
-        tablename = attrs.get('__table__', None) or name
+        tablename = attrs.get('__tablename__', None) or name
         logging.info('find model: %s table: %s' % (name, tablename))
         mappings = dict()
         fields = []
@@ -184,8 +184,29 @@ class Model(dict, metaclass=ModelMetaClass):
         return cls(**rs[0]) # 返回cls类的一个实例,初始化的参数是rs[0]
 
     @classmethod
-    async def findall(cls):
-        rs = await select('select * from %s' % cls.__tablename__)
+    async def findall(cls, where=None, args=None, **kw):
+        sql=[cls.__select__]
+        if where:
+            sql.append(' where ')
+            sql.append(where)
+        if args is None:
+            args = []
+        orderBy = kw.get('orderBy', None)
+        if orderBy:
+            sql.append(' order by')
+            sql.append(orderBy)
+        limit = kw.get('limit', None)
+        if limit is not None:
+            sql.append('limit')
+            if isinstance(limit, int):
+                sql.append('?')
+                args.append(limit)
+            elif isinstance(limit, tuple) and len(limit) == 2:
+                sql.append('?, ?')
+                args.extend(limit)
+            else:
+                raise ValueError('Invalid limit value: %s' % str(limit))
+        rs = await select(' '.join(sql), args)
         logging.info(rs)
         if len(rs) == 0:
             return None
