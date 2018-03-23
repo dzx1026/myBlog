@@ -84,7 +84,7 @@ class IntegerField(Field):
 
 
 class BooleanField(Field):
-    def __init__(self, name=None, primary_key=False, default=None, ddl='tinyint'):
+    def __init__(self, name=None, primary_key=False, default=0, ddl='tinyint'):
         super().__init__(name, ddl, primary_key, default)
 
 
