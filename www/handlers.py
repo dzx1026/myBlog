@@ -131,3 +131,11 @@ async def index(request):
         'blogs': blogs
     }
 
+@post('/api/addblog')
+async def addblog(*, title, content, safenum):
+    blog = Blog(summary=title, content=content)
+    blog.save()
+    return {
+        "__template__": 'blogs.html',
+        'blogs': Blog.findall()
+    }

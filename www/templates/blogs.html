@@ -1,28 +1,37 @@
 {% extends '__base__.html' %}
 
 {% block title %}博客{% endblock %}
+{% block beforehead %}<script src="https://cdn.bootcss.com/vue/2.4.2/vue.min.js"></script> {% endblock %}
 
 {% block content %}
+    <script>
+        $(function(){
+            var vm=new Vue({
+                el:'#newblog',
+            });
+            $('#newblog').show()
+        });
+    </script>
     <div class="col-lg-9">
         <!-- articledistribute start -->
 
-        <form class="form-horizontal" role="form">
+        <form class="form-horizontal" id="newblog" role="form" v-on=submit:submit">
             <div class="form-group">
                 <label for="title" class="col-lg-2 control-label">标题</label>
                 <div class="col-sm-8">
-                    <input type="text" class="form-control" id="title" placeholder="请输入标题">
+                    <input type="text" class="form-control" v-mode="title" id="title" placeholder="请输入标题">
                 </div>
             </div>
             <div class="form-group">
                 <label for="content" class="col-sm-2 control-label">内容</label>
                 <div class="col-sm-8">
-                    <textarea class="form-control" placeholder="输入内容" id="content"></textarea>
+                    <textarea class="form-control" placeholder="输入内容" v-mode="content" id="content"></textarea>
                 </div>
             </div>
             <div class="form-group">
                 <label for="num" class="col-sm-2 control-label">验证码</label>
                 <div class="col-sm-2">
-                    <input type="text" class="form-control" id="num" placeholder="">
+                    <input type="text" class="form-control" id="num" v-model="safenum" placeholder="">
                 </div>
                 <div>
                     <img src="/statci/img/logo.png">
